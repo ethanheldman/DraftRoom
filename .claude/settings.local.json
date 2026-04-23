@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls:*)",
+      "Read(//Users/eheldman/.claude/skills/**)",
+      "Read(//Users/eheldman/.claude/**)",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const m = require\\(''''/Users/eheldman/Desktop/ScreenRIGHT/screenwriter/client/node_modules/@paper-design/shaders-react/dist/shaders/mesh-gradient.js''''\\); console.log\\(JSON.stringify\\(m.purplePreset, null, 2\\)\\)\")",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(lsof -ti:5173)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(claude mcp:*)",
+      "Bash(npx skills:*)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_publishable_keys",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "Bash(node -e \"const s = require\\(''./server/node_modules/stripe''\\); console.log\\(Object.keys\\(s.Stripe || s\\).filter\\(k => k.includes\\(''API''\\) || k.includes\\(''basil''\\) || k.includes\\(''clover''\\)\\).slice\\(0,5\\)\\)\")",
+      "Bash(node -e \"const s = require\\(''stripe''\\); console.log\\(s.Stripe?.LATEST_API_VERSION || ''unknown''\\)\")",
+      "Bash(unzip -o '/Users/eheldman/Downloads/stripe-sample-code.zip' -d /tmp/stripe-sample)",
+      "Read(//tmp/**)",
+      "Bash(unzip -l '/Users/eheldman/Downloads/openclaw-main.zip')",
+      "Read(//private/tmp/**)",
+      "Bash(unzip -q '/Users/eheldman/Downloads/openclaw-main.zip' -d openclaw)",
+      "Bash(npm --version)",
+      "Bash(openclaw:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(cp:*)"
+    ]
+  }
+}

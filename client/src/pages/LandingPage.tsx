@@ -53,7 +53,9 @@ export default function LandingPage() {
     <div className="lp">
       {/* ── NAV ─────────────────────────────────────────────────────────── */}
       <nav className="lp-nav" ref={navRef}>
-        <span className="lp-nav-logo">Slug<span>.</span>line</span>
+        {/* Wordmark — italic "Room" picks up the active app theme accent
+            (was previously the leftover "Slug.line" pre-rebrand mark). */}
+        <span className="lp-nav-logo">Draft<em style={{ fontStyle: 'italic', color: '#c17f24' }}>Room</em></span>
         <ul className="lp-nav-links">
           <li><a href="#features">Features</a></li>
           <li><a href="#cta">Pricing</a></li>
@@ -109,7 +111,7 @@ export default function LandingPage() {
             </div>
             <div className="lp-sp-action">
               She opens a new tab. Types{' '}
-              <em style={{ color: 'rgba(242,237,228,0.5)' }}>slugline</em>{' '}
+              <em style={{ color: 'rgba(242,237,228,0.5)' }}>draftroom</em>{' '}
               into the address bar. Something shifts.
             </div>
             <div className="lp-sp-character">WRITER (CONT'D)</div>
@@ -134,8 +136,8 @@ export default function LandingPage() {
             {
               n: '01',
               headline: <>Final Draft called.<br /><em>It wants its UI back.</em></>,
-              body: `You shouldn't need a manual to open a file. The software that powered Hollywood's last three decades was built for fax machines and Zip drives. Slugline was built for the way you actually work: fast, distraction-free, and in a browser you already have open.`,
-              aside: 'Slugline loads in under two seconds on any device. No install. No dongle. No "Checking license…"',
+              body: `You shouldn't need a manual to open a file. The software that powered Hollywood's last three decades was built for fax machines and Zip drives. DraftRoom was built for the way you actually work: fast, distraction-free, and in a browser you already have open.`,
+              aside: 'DraftRoom loads in under two seconds on any device. No install. No dongle. No "Checking license…"',
             },
             {
               n: '02',
@@ -177,7 +179,7 @@ export default function LandingPage() {
               scene: 'INT. THE WRITERS ROOM',
               num: '01',
               title: <>Real-time<br /><span>Collaboration</span></>,
-              body: `Multiple writers, one script, zero merge conflicts. Watch your co-writer's cursor move in real time. Resolve contradictions before they become arguments. The best room writing happens when everyone can see the page at once — Slugline makes that possible without a whiteboard.`,
+              body: `Multiple writers, one script, zero merge conflicts. Watch your co-writer's cursor move in real time. Resolve contradictions before they become arguments. The best room writing happens when everyone can see the page at once — DraftRoom makes that possible without a whiteboard.`,
               aside: { heading: 'Spec', lines: ['Sync latency under 80ms.', 'Presence indicators for', 'every active collaborator.', 'Threaded margin notes.', 'Lock scenes while drafting.'] },
             },
             {
@@ -185,7 +187,7 @@ export default function LandingPage() {
               scene: 'INT. THE FORMAT — DAY',
               num: '02',
               title: <>Industry-Standard<br /><span>Formatting</span></>,
-              body: `There is a right way to format a script. Slugline knows it. Every slug line, every transition, every parenthetical — spaced and sized exactly as your production coordinator expects. The format never fights you. It's simply there, the way margins are simply there.`,
+              body: `There is a right way to format a script. DraftRoom knows it. Every slug line, every transition, every parenthetical — spaced and sized exactly as your production coordinator expects. The format never fights you. It's simply there, the way margins are simply there.`,
               aside: { heading: 'Spec', lines: ['Courier Prime, 12pt.', 'Auto scene numbering.', 'Smart element detection.', 'One-key element cycling.'] },
             },
             {
@@ -221,7 +223,7 @@ export default function LandingPage() {
         <div className="lp-quote-inner lp-scrollfade" data-lp-scroll>
           <div className="lp-quote-rule" />
           <blockquote className="lp-pull-quote">
-            "I rewrote my pilot in Slugline over a weekend. Turned it in Monday.
+            "I rewrote my pilot in DraftRoom over a weekend. Turned it in Monday.
             My showrunner asked what happened to my formatting. I said nothing.
             That's the point."
           </blockquote>
@@ -254,14 +256,14 @@ export default function LandingPage() {
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer className="lp-footer">
-        <div className="lp-footer-brand">Slugline</div>
+        <div className="lp-footer-brand">DraftRoom</div>
         <ul className="lp-footer-links">
           <li><a href="#features">Features</a></li>
           <li><a href="#cta">Pricing</a></li>
           <li><a href="#">Privacy</a></li>
           <li><a href="#">Terms</a></li>
         </ul>
-        <div>&copy; 2026 Slugline Inc. — Written in California.</div>
+        <div>&copy; 2026 DraftRoom — Written in California.</div>
       </footer>
     </div>
   );

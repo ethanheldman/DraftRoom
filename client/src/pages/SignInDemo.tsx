@@ -8,6 +8,7 @@ import { HollywoodBackground } from "@/components/ui/hollywood-background";
 import { useAuth } from "@/context/AuthContext";
 import { createDemoProject } from "@/utils/demoProject";
 import { upsertProject, saveScript, loadProjects } from "@/utils/storage";
+import { getEnabledAuthProviders, type AuthProviderFlags } from "@/lib/supabase";
 
 // Flag set the moment a user completes the experience-level picker. Ensures
 // we only ever seed the demo project once per account, so returning users who
@@ -258,6 +259,16 @@ export default function SignInDemo() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authInfo, setAuthInfo] = useState<string | null>(null);
 
+  // Hide Google sign-in until it's actually enabled on the Supabase project.
+  // Without this gate the button looks dead — Supabase silently no-ops on
+  // `signInWithOAuth` calls for unconfigured providers.
+  const [providerFlags, setProviderFlags] = useState<AuthProviderFlags | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getEnabledAuthProviders().then(flags => { if (!cancelled) setProviderFlags(flags); });
+    return () => { cancelled = true; };
+  }, []);
+
   // If already authenticated, go straight to dashboard
   useEffect(() => {
     if (!loading && user) {
@@ -316,6 +327,12 @@ export default function SignInDemo() {
 
   async function handleGoogleSignIn() {
     setAuthError(null);
+    if (providerFlags && !providerFlags.google) {
+      // Defensive: if the button somehow shows up while Google is disabled,
+      // tell the user instead of silently no-opping.
+      setAuthError("Google sign-in isn't set up yet. Use email and password for now.");
+      return;
+    }
     const { error } = await signInWithGoogle();
     if (error) setAuthError(error);
     // Google OAuth redirects, so no further action needed
@@ -483,7 +500,9 @@ export default function SignInDemo() {
           testimonials={sampleTestimonials}
           onSignIn={handleSignIn}
           onSignUp={handleSignUp}
-          onGoogleSignIn={handleGoogleSignIn}
+          // Pass undefined when Google isn't enabled — the SignInPage hides
+          // the button when this prop is missing.
+          onGoogleSignIn={providerFlags?.google ? handleGoogleSignIn : undefined}
           onResetPassword={handleResetPassword}
           onModeChange={() => { setAuthError(null); setAuthInfo(null); }}
           errorMessage={authError ?? undefined}

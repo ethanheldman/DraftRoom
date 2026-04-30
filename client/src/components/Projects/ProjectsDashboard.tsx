@@ -207,14 +207,14 @@ export default function ProjectsDashboard() {
     return () => window.removeEventListener('tour:dash-view', onTourDashView);
   }, []);
 
-  // Auto-start tour for brand-new users (never seen tutorial AND no projects yet)
+  // Auto-start the tour for brand-new users. The previous `projects.length === 0`
+  // gate stopped firing once we started seeding a demo screenplay during
+  // onboarding — the storage flags are the real source of truth for "has this
+  // user been onboarded yet".
   useEffect(() => {
     if (!localStorage.getItem('sr-tour-seen') && !localStorage.getItem('sr-tutorial-seen')) {
-      const projects = loadProjects();
-      if (projects.length === 0) {
-        const t = setTimeout(() => startTour(), 1200);
-        return () => clearTimeout(t);
-      }
+      const t = setTimeout(() => startTour(), 1200);
+      return () => clearTimeout(t);
     }
   }, []);
 

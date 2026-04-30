@@ -358,16 +358,14 @@ export default function SignInDemo() {
     setSelected(level);
     localStorage.setItem(EXPERIENCE_KEY, level);
     localStorage.removeItem('sr-tutorial-seen');
-    // Seed a starter screenplay so the new user lands *inside the editor*,
-    // not on an empty dashboard. The tutorial/tour can then highlight real
-    // elements in a real document.
-    const demoId = seedDemoProjectIfFirstRun(level);
+    localStorage.removeItem('sr-tour-seen');
+    // Seed a starter screenplay so the tour has a real script to drop the
+    // user into when it reaches the editor steps. Land on the dashboard
+    // first so the tour starts with the project-cards / nav steps before
+    // navigating into the demo screenplay itself.
+    seedDemoProjectIfFirstRun(level);
     setTimeout(() => {
-      if (demoId) {
-        navigate(`/projects/${demoId}`, { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate('/dashboard', { replace: true });
     }, 350);
   }
 
@@ -447,11 +445,13 @@ export default function SignInDemo() {
             <button
               onClick={() => {
                 localStorage.setItem(EXPERIENCE_KEY, 'experienced');
-                // Even skippers get the demo — it's the point of the onboarding.
-                // If they already have projects, seedDemoProjectIfFirstRun
-                // returns null and we fall back to the dashboard.
-                const demoId = seedDemoProjectIfFirstRun('experienced');
-                navigate(demoId ? `/projects/${demoId}` : '/dashboard', { replace: true });
+                localStorage.removeItem('sr-tutorial-seen');
+                localStorage.removeItem('sr-tour-seen');
+                // Even skippers get the demo seeded so the tour can land in a
+                // real script when it reaches the editor steps. Always start
+                // on the dashboard so the tour walks the full flow.
+                seedDemoProjectIfFirstRun('experienced');
+                navigate('/dashboard', { replace: true });
               }}
               style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: '0.1em', color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 16px', transition: 'color 0.2s' }}
               onMouseEnter={e => (e.currentTarget.style.color = 'hsl(var(--foreground))')}

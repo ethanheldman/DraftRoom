@@ -8,6 +8,10 @@ interface Props {
   onChange: (beats: Beat[]) => void;
   nodes: ScriptNode[];
   title?: string;
+  // The project's target screenplay length. Used as the Story Arc canvas
+  // size and to scale "+ Add Beat" defaults so a 30-page short and a
+  // 120-page feature both get sensible default beat positions.
+  pageGoal?: number;
 }
 
 // Uniform Act styling: all three acts use the primary accent color.
@@ -43,15 +47,23 @@ interface EditState { title: string; description: string; page: string; color: s
 
 const inputClass = "w-full rounded-xl border border-border bg-secondary px-2 py-1 text-[11px] text-foreground outline-none focus:border-violet-400/70 transition-colors placeholder:text-muted-foreground";
 
-function ArcGraph({ beats, totalPages }: { beats: Beat[]; totalPages: number }) {
+function ArcGraph({ beats, scriptPages, pageGoal }: { beats: Beat[]; scriptPages: number; pageGoal: number }) {
   if (beats.length === 0) return null;
   const W = 500, H = 64;
   const PAD = 8;
-  // Use the actual script length so the act zones correspond to real pages.
-  // If a beat sits beyond the current script (e.g. placeholder), fall through
-  // to Math.max so the dot still renders.
-  const maxPage = Math.max(totalPages, ...beats.map(b => b.page));
-  const toX = (page: number) => PAD + (page / maxPage) * (W - 2 * PAD);
+  // The arc canvas represents the *planned* screenplay length (pageGoal),
+  // not the current script length. Otherwise on a fresh project the canvas
+  // collapses to the 20-page floor — so a p.5 beat lands at exactly 25% of
+  // the canvas, which is the Act I/II divider line, and visually appears to
+  // straddle two acts even though pageToAct correctly assigns it to Act I.
+  // Beats can also legitimately be planned beyond the goal, so we widen the
+  // canvas to whichever is larger.
+  const lastBeatPage = Math.max(0, ...beats.map(b => b.page));
+  const canvasPages = Math.max(pageGoal, lastBeatPage, 1);
+  const toX = (page: number) => PAD + (page / canvasPages) * (W - 2 * PAD);
+  // Where the user's actual script ends — drawn as a subtle marker so the
+  // writer can see "I've written this far, my next beat is targeted there."
+  const scriptEndX = scriptPages > 0 && scriptPages < canvasPages ? toX(scriptPages) : null;
 
   return (
     <div className="px-6 py-4 border-b border-border" style={{ background: 'hsl(var(--card))' }}>
@@ -82,6 +94,15 @@ function ArcGraph({ beats, totalPages }: { beats: Beat[]; totalPages: number }) 
 
         {/* Timeline baseline */}
         <line x1={PAD} y1={H / 2 - 4} x2={W - PAD} y2={H / 2 - 4} stroke="hsl(var(--border))" strokeWidth="1" />
+
+        {/* Where the actual script currently ends (only when shorter than goal) */}
+        {scriptEndX !== null && (
+          <g>
+            <line x1={scriptEndX} y1={6} x2={scriptEndX} y2={H - 14}
+              stroke="hsl(var(--foreground))" strokeWidth="1" strokeDasharray="2 2" opacity="0.35" />
+            <title>You've written {scriptPages}p of {pageGoal}p</title>
+          </g>
+        )}
 
         {/*
           Beat dots — when two beats sit on the same page (e.g. a template
@@ -121,7 +142,7 @@ function ArcGraph({ beats, totalPages }: { beats: Beat[]; totalPages: number }) 
   );
 }
 
-export default function BeatSheetView({ beats, onChange, nodes, title }: Props) {
+export default function BeatSheetView({ beats, onChange, nodes, title, pageGoal = 110 }: Props) {
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditState>({ title: '', description: '', page: '1', color: '', linkedSceneIndex: '' });
   const [selectedBeat, setSelectedBeat] = useState<Beat | null>(null);
@@ -132,12 +153,24 @@ export default function BeatSheetView({ beats, onChange, nodes, title }: Props) 
   const sceneHeadings = getSceneHeadings(nodes);
 
   function addBeat(act: number) {
-    const lastPage = Math.max(...beats.filter(b => b.act === act).map(b => b.page), act === 1 ? 0 : act === 2 ? 30 : 80);
+    // Scale the default beat position to the project's target length so a
+    // 30-page short doesn't get a default p.85 beat (which would land 55
+    // pages past the end of the planned script).
+    const target = Math.max(pageGoal, 12);
+    const actStart = act === 1 ? 0
+                   : act === 2 ? Math.round(target * 0.25)
+                   : Math.round(target * 0.75);
+    const actEnd   = act === 1 ? Math.round(target * 0.25)
+                   : act === 2 ? Math.round(target * 0.75)
+                   : target;
+    const stepSize = Math.max(2, Math.round(target / 22));
+    const lastInAct = Math.max(actStart, ...beats.filter(b => b.act === act).map(b => b.page));
+    const nextPage = Math.min(actEnd, lastInAct + stepSize);
     const id = makeId();
-    const newBeat: Beat = { id, title: 'New Beat', description: '', act, page: lastPage + 5, color: '' };
+    const newBeat: Beat = { id, title: 'New Beat', description: '', act, page: nextPage, color: '' };
     onChange([...beats, newBeat]);
     setEditId(id);
-    setDraft({ title: 'New Beat', description: '', page: String(lastPage + 5), color: '', linkedSceneIndex: '' });
+    setDraft({ title: 'New Beat', description: '', page: String(nextPage), color: '', linkedSceneIndex: '' });
   }
 
   function startEdit(b: Beat) {
@@ -228,7 +261,7 @@ export default function BeatSheetView({ beats, onChange, nodes, title }: Props) 
       </div>
 
       {/* ── Arc visualization ─────────────────────────────────────────── */}
-      <ArcGraph beats={beats} totalPages={computeTotalPages(nodes)} />
+      <ArcGraph beats={beats} scriptPages={computeTotalPages(nodes)} pageGoal={pageGoal} />
 
       {/* ── Acts ──────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">

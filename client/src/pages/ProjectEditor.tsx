@@ -549,7 +549,8 @@ export default function ProjectEditor() {
             <BeatSheetView beats={project.beatSheet}
               onChange={beats => updateProject({ ...project, beatSheet: beats })}
               nodes={nodes}
-              title={project.title} />
+              title={project.title}
+              pageGoal={project.settings.pageGoal} />
             </div>
           )}
 

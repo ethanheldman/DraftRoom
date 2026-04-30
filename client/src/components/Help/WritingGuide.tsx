@@ -12,7 +12,9 @@ import { getPlan, isPro } from '../../lib/plan';
 type SectionId =
   | 'intro' | 'elements' | 'scene-headings' | 'action'
   | 'character' | 'dialogue' | 'parenthetical' | 'transitions'
-  | 'structure' | 'tips' | 'cheatsheet' | 'ai-tutor' | 'exercises';
+  | 'structure' | 'beat-sheet' | 'tips'
+  | 'storyboard' | 'budget'
+  | 'cheatsheet' | 'ai-tutor' | 'exercises';
 
 interface NavSection {
   id: SectionId;
@@ -688,12 +690,22 @@ const MODULES: ModuleDef[] = [
     title: 'Story Craft', subtitle: 'Go beyond format — write stories that actually work',
     color: '#f59e0b', icon: '◈',
     lessons: [
-      { id: 'structure', title: 'Story Structure', tagline: 'Three acts, beat sheets, and the shape of a story', readTime: '5 min' },
-      { id: 'tips', title: 'Pro Tips', tagline: 'Hard-won wisdom from working screenwriters', readTime: '4 min' },
+      { id: 'structure',  title: 'Story Structure', tagline: 'Three acts, beat sheets, and the shape of a story', readTime: '5 min' },
+      { id: 'beat-sheet', title: 'Beat Sheets',     tagline: 'Map your story before you write the first line', readTime: '4 min' },
+      { id: 'tips',       title: 'Pro Tips',        tagline: 'Hard-won wisdom from working screenwriters', readTime: '4 min' },
     ],
   },
   {
-    id: 'reference', num: 4,
+    id: 'production', num: 4,
+    title: 'Production Tools', subtitle: 'Plan the shoot before the cameras roll',
+    color: '#06b6d4', icon: '◇',
+    lessons: [
+      { id: 'storyboard', title: 'Storyboards', tagline: 'Visualize every scene before you direct it', readTime: '3 min' },
+      { id: 'budget',     title: 'Budgeting',   tagline: 'Track department spend, estimated vs actual', readTime: '4 min' },
+    ],
+  },
+  {
+    id: 'reference', num: 5,
     title: 'Quick Reference', subtitle: 'Everything at a glance when you need it fast',
     color: '#10b981', icon: '◎',
     lessons: [
@@ -701,7 +713,7 @@ const MODULES: ModuleDef[] = [
     ],
   },
   {
-    id: 'interactive', num: 5,
+    id: 'interactive', num: 6,
     title: 'Interactive', subtitle: 'Put your knowledge to the test',
     color: '#ec4899', icon: '⚡',
     lessons: [
@@ -992,6 +1004,144 @@ const SECTIONS: Record<SectionId, React.ReactNode> = {
     </>
   ),
 
+  'beat-sheet': (
+    <>
+      <SectionTitle>Beat Sheets</SectionTitle>
+      <Body>A beat sheet is a one-page outline of every major story beat in your screenplay, plotted against page numbers. It's the difference between writing into the dark and writing with a map. Use it to find structural problems <em>before</em> you've spent three months on a draft that doesn't work.</Body>
+      <Body>Open the <strong>Beat Sheet</strong> tab in DraftRoom to see your story laid out as a timeline. Drop in beats by page, color-code them, and link each beat to the scene it represents.</Body>
+      <SubTitle>The Save the Cat Beats</SubTitle>
+      <Body>Blake Snyder's beat sheet is the most widely used template in modern screenwriting. Most studio films hit these beats within a few pages of where they're "supposed" to land.</Body>
+      <div className="space-y-2 my-4">
+        {[
+          { page: 'p.1',   name: 'Opening Image',         desc: 'A snapshot of the protagonist\'s world before the story begins.' },
+          { page: 'p.5',   name: 'Theme Stated',          desc: 'Someone says the lesson the hero will learn — usually unaware.' },
+          { page: 'p.10',  name: 'Catalyst',              desc: 'The inciting incident. Life will never be the same.' },
+          { page: 'p.12',  name: 'Debate',                desc: 'Hesitation. Should the hero accept the call?' },
+          { page: 'p.25',  name: 'Break Into Two',        desc: 'The hero commits. New world, new rules.' },
+          { page: 'p.30',  name: 'Fun and Games',         desc: 'The promise of the premise. The trailer moments.' },
+          { page: 'p.55',  name: 'Midpoint',              desc: 'False victory or false defeat. Stakes raise.' },
+          { page: 'p.75',  name: 'All Is Lost',           desc: 'Everything collapses. Often a "whiff of death."' },
+          { page: 'p.85',  name: 'Dark Night of the Soul', desc: 'The hero processes the loss and finds new resolve.' },
+          { page: 'p.85',  name: 'Break Into Three',      desc: 'A new plan. Synthesis of everything learned.' },
+          { page: 'p.110', name: 'Final Image',           desc: 'A snapshot that mirrors the opening — proof of change.' },
+        ].map(b => (
+          <div key={b.name} className="flex gap-4 items-start p-3 rounded-xl" style={{ background: 'hsl(var(--secondary))' }}>
+            <span className="text-[11px] font-mono font-bold text-violet-400 w-12 flex-shrink-0 pt-0.5">{b.page}</span>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{b.name}</p>
+              <p className="text-xs text-muted-foreground">{b.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <SubTitle>Working in DraftRoom</SubTitle>
+      <Body>The Beat Sheet view scales the act zones to your script's actual page count, so the 25/50/25 split is honest whether you're writing a 12-page short or a 130-page feature. Hit <strong>Generate from Script</strong> to have the AI read your draft and propose beats — useful when reverse-engineering structure from a finished pass.</Body>
+      <DoDont
+        dos={[
+          'Outline before you write — fix structure on a single page, not in 90',
+          'Plot beats as page targets, not exact pages — they\'re landing zones',
+          'Color-code beats by storyline (A-plot, B-plot, theme) to see weaving',
+          'Link each beat to the scene that pays it off, so the timeline stays honest',
+          'Revise the beat sheet as the script evolves — they\'re a living document',
+        ]}
+        donts={[
+          'Treat Save the Cat as a checklist — it\'s a tool, not a formula',
+          'Write 80 beats. If you can\'t outline the story in ~15 beats, the spine isn\'t clear yet',
+          'Skip the beat sheet because "it\'ll lock me in" — outlines free you to take risks',
+          'Force every story into a 110-page shape. Indies, shorts, and TV all bend the math',
+        ]}
+      />
+      <Tip>Stuck on Act II? Almost always the beat sheet is the problem, not the writing. If your Midpoint and All-Is-Lost don't feel like real reversals on paper, no amount of dialogue polish will fix the saggy middle.</Tip>
+    </>
+  ),
+
+  storyboard: (
+    <>
+      <SectionTitle>Storyboards</SectionTitle>
+      <Body>A storyboard is a visual outline of your film, scene by scene. Even if you're not directing, building one teaches you how the words on the page will translate to images on screen — and exposes scenes that <em>read</em> well but won't <em>shoot</em> well.</Body>
+      <Body>DraftRoom's <strong>Storyboard</strong> tab auto-generates one tile per scene heading. Drop in a reference image — a photo, a movie still, a Pinterest shot — and the scene now has a visual anchor.</Body>
+      <SubTitle>Why Writers Use Storyboards</SubTitle>
+      <div className="space-y-3 my-5">
+        {[
+          { title: 'Find unfilmable scenes', desc: <>A scene that's nothing but two people talking on a couch for six pages reads fine. It also looks dead on screen. The storyboard makes that obvious.</> },
+          { title: 'Mood boards by scene',   desc: <>Each scene gets a vibe — the lighting of <em>Blade Runner</em>, the kitchen warmth of <em>Pixar</em>. Producers and directors read a script differently when they can see what you saw.</> },
+          { title: 'Pitch material',         desc: <>A 10-tile storyboard works in a pitch room when 110 pages of script don't. Showrunners and producers think visually.</> },
+          { title: 'Block by scene',         desc: <>See the rhythm of your film — interiors vs exteriors, day vs night, intimate vs scaled. Imbalance shows up immediately.</> },
+        ].map(t => (
+          <div key={t.title} className="p-4 rounded-2xl" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <p className="text-sm font-semibold text-foreground mb-1">{t.title}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{t.desc}</p>
+          </div>
+        ))}
+      </div>
+      <SubTitle>Working in DraftRoom</SubTitle>
+      <Body>Every scene heading in your script becomes a storyboard tile automatically. Hover any tile to upload a reference image — JPG, PNG, screenshot, anything. The tile keeps your scene heading as the caption, so you always know what frame goes with what page.</Body>
+      <DoDont
+        dos={[
+          'Use real movie stills as references — directors will recognize what you mean',
+          'Build the storyboard scene-by-scene as you write, not all at once at the end',
+          'Pull lighting and color references — "warm tungsten" or "cold fluorescent" tells a DP everything',
+          'Show the storyboard to producers in pitches — it works',
+        ]}
+        donts={[
+          'Try to draw shot-by-shot storyboards. That\'s a storyboard artist\'s job, not yours',
+          'Use stock photos that fight the tone — generic happy-people imagery deflates a thriller',
+          'Ignore scenes you "don\'t have a vibe for" — those are the scenes that need rewriting most',
+        ]}
+      />
+      <Tip>If you can't find any reference image that matches a scene, the scene probably isn't visual enough. Rewrite it for the camera before the camera tells you the same thing the hard way.</Tip>
+    </>
+  ),
+
+  budget: (
+    <>
+      <SectionTitle>Budgeting</SectionTitle>
+      <Body>Every screenplay is also a number. Whether you're writing a $5K student short or a $100M feature, the script's <em>shape</em> determines what it costs — and writers who understand budget write more producible scripts.</Body>
+      <Body>DraftRoom's <strong>Budget</strong> tab tracks line items by department, with estimated vs. actual side-by-side. Use it to plan a shoot, or to pressure-test whether the script you've written can actually be made for the money you have.</Body>
+      <SubTitle>The Departments</SubTitle>
+      <div className="space-y-3 my-5">
+        {[
+          { dept: 'Above the Line', icon: '🎬', desc: 'Writer, director, producers, lead cast. Often 30–50% of an indie budget.' },
+          { dept: 'Camera',         icon: '📷', desc: 'Camera package, lenses, DP, AC. Bigger format = bigger number.' },
+          { dept: 'Art Direction',  icon: '🎨', desc: 'Sets, props, dressing. Period pieces and sci-fi blow this up fastest.' },
+          { dept: 'Costume',        icon: '👗', desc: 'Wardrobe, fittings, alterations. Multiplies with cast size.' },
+          { dept: 'Sound',          icon: '🎙️', desc: 'Production sound, boom op. Dialogue-heavy scripts demand more.' },
+          { dept: 'Lighting',       icon: '💡', desc: 'Gaffer, electric, lighting package. Night exteriors are expensive.' },
+          { dept: 'Post Production', icon: '🖥️', desc: 'Edit, color, sound mix, music, VFX. Often underestimated.' },
+        ].map(d => (
+          <div key={d.dept} className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <span className="text-xl flex-shrink-0">{d.icon}</span>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{d.dept}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{d.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <SubTitle>Estimated vs. Actual</SubTitle>
+      <Body>Every line tracks both numbers. <strong>Estimated</strong> is what you budgeted; <strong>Actual</strong> is what you spent. Variance is the gap. The Budget view colors lines green when you're under, amber as you approach the cap, and red when you've gone over — so you see problems while there's still time to fix them.</Body>
+      <SubTitle>Writing Cheaper Scripts</SubTitle>
+      <DoDont
+        dos={[
+          'Limit locations — every new location is a half-day of move time',
+          'Write contained scenes you can shoot in a single take if needed',
+          'Use day for night sparingly — VFX is cheaper than relighting',
+          'Keep speaking-role count tight; SAG rates are per-role-per-day',
+          'Default to interiors. Weather, sun, traffic, and noise are exterior costs',
+        ]}
+        donts={[
+          'Write crowd scenes you don\'t need — extras add up fast',
+          'Stage car chases you can\'t afford. Stunt drivers, picture cars, road permits',
+          'Set scenes at golden hour without a plan — you get 20 minutes a day',
+          'Open with a $1M sequence on page 1. Save the splash for the end of Act 2',
+          'Underestimate post — color, mix, and music are real numbers, not free',
+        ]}
+      />
+      <Warning>The cheapest script is the one that's been to production. If you've never been on set, ask a line producer to read your script before you finalize it — they'll spot $50K of saveable cost in 20 minutes.</Warning>
+      <Tip>The Budget view is for tracking too — once you're shooting, log actuals daily. Variance compounds; catching a department 10% over on day 3 lets you recover by day 18.</Tip>
+    </>
+  ),
+
   tips: (
     <>
       <SectionTitle>Pro Tips</SectionTitle>
@@ -1099,7 +1249,10 @@ const NAV: NavSection[] = [
   { id: 'parenthetical',  label: 'Parentheticals',    icon: <BookOpenIcon className="w-3.5 h-3.5" />, group: 'Formatting' },
   { id: 'transitions',    label: 'Transitions',       icon: <ChevronRightIcon className="w-3.5 h-3.5" />, group: 'Formatting' },
   { id: 'structure',      label: 'Story Structure',   icon: <BookOpenIcon className="w-3.5 h-3.5" />, group: 'Story' },
+  { id: 'beat-sheet',     label: 'Beat Sheets',       icon: <CheckCircleIcon className="w-3.5 h-3.5" />, group: 'Story' },
   { id: 'tips',           label: 'Pro Tips',          icon: <StarIcon className="w-3.5 h-3.5" />, group: 'Story' },
+  { id: 'storyboard',     label: 'Storyboards',       icon: <FileTextIcon className="w-3.5 h-3.5" />, group: 'Production' },
+  { id: 'budget',         label: 'Budgeting',         icon: <TrophyIcon className="w-3.5 h-3.5" />, group: 'Production' },
   { id: 'cheatsheet',     label: 'Quick Reference',   icon: <ZapIcon className="w-3.5 h-3.5" /> },
   { id: 'exercises',      label: 'Exercises',         icon: <PenIcon className="w-3.5 h-3.5" />, proOnly: true, group: 'Interactive' },
   { id: 'ai-tutor',       label: 'AI Tutor',          icon: <SparklesIcon className="w-3.5 h-3.5" />, proOnly: true, group: 'Interactive' },

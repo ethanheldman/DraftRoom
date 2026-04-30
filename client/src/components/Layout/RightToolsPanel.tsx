@@ -58,16 +58,28 @@ function computeStats(nodes: ScriptNode[]) {
   const uniqueChars = Object.keys(charMap).length;
   const totalDialogue = dialogueCount;
 
-  // Act guess based on % through script
+  // Act guess based on the canonical 25/50/25 three-act split — matches
+  // BeatSheetView and the Story Structure lesson. Previously this used 0.85
+  // for the Act II/III boundary, leaving Act III only 15% and disagreeing
+  // with the rest of the app.
+  //
+  // For very short scripts the math is meaningless (a 1-page draft would
+  // show as 0/1/0 pages, since `Math.round(0.25) === 0`). We surface a
+  // `tooShort` flag instead so the panel can show a proper placeholder
+  // until there's enough script to reason about structure.
   const actBreakdown = (() => {
-    const total = Math.max(estimatedPages, 1);
-    const act1End = Math.round(total * 0.25);
-    const act2End = Math.round(total * 0.85);
+    const total = estimatedPagesRaw;
+    if (total < 3) {
+      return { act1Pages: 0, act2Pages: 0, act3Pages: 0, total: 0, tooShort: true as const };
+    }
+    const act1End = total * 0.25;
+    const act2End = total * 0.75;
     return {
-      act1Pages: act1End,
-      act2Pages: act2End - act1End,
+      act1Pages: Math.round(act1End),
+      act2Pages: Math.round(act2End - act1End),
       act3Pages: Math.round(total - act2End),
       total: Math.round(total),
+      tooShort: false as const,
     };
   })();
 
@@ -140,21 +152,32 @@ function StatsPanel({ nodes, pageGoal = 110 }: { nodes: ScriptNode[]; pageGoal?:
       {/* Act breakdown */}
       <div>
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Act Breakdown</p>
-        <div className="space-y-1.5">
-          {[
-            { label: 'Act I', pages: stats.actBreakdown.act1Pages, color: 'hsl(var(--primary))', pct: Math.round((stats.actBreakdown.act1Pages / stats.actBreakdown.total) * 100) },
-            { label: 'Act II', pages: stats.actBreakdown.act2Pages, color: 'hsl(var(--primary))', pct: Math.round((stats.actBreakdown.act2Pages / stats.actBreakdown.total) * 100) },
-            { label: 'Act III', pages: stats.actBreakdown.act3Pages, color: 'hsl(var(--primary))', pct: Math.round((stats.actBreakdown.act3Pages / stats.actBreakdown.total) * 100) },
-          ].map(act => (
-            <div key={act.label} className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground w-10 shrink-0">{act.label}</span>
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--border))' }}>
-                <div className="h-full rounded-full" style={{ width: `${act.pct}%`, background: act.color }} />
-              </div>
-              <span className="text-[10px] text-muted-foreground w-8 text-right shrink-0">{act.pages}p</span>
-            </div>
-          ))}
-        </div>
+        {stats.actBreakdown.tooShort ? (
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Add more pages to see how your script splits across the three acts.
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {[
+              { label: 'Act I',   pages: stats.actBreakdown.act1Pages },
+              { label: 'Act II',  pages: stats.actBreakdown.act2Pages },
+              { label: 'Act III', pages: stats.actBreakdown.act3Pages },
+            ].map(act => {
+              const pct = stats.actBreakdown.total > 0
+                ? Math.round((act.pages / stats.actBreakdown.total) * 100)
+                : 0;
+              return (
+                <div key={act.label} className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground w-10 shrink-0">{act.label}</span>
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--border))' }}>
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'hsl(var(--primary))' }} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground w-8 text-right shrink-0">{act.pages}p</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Dialogue breakdown */}

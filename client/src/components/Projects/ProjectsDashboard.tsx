@@ -131,11 +131,11 @@ export default function ProjectsDashboard() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent');
   const [experienceLevel] = useState<ExperienceLevel>(getExperienceLevel);
-  const [showTutorial, setShowTutorial] = useState(() => {
-    if (localStorage.getItem('sr-tutorial-seen')) return false;
-    const lvl = getExperienceLevel();
-    return lvl === 'beginner';
-  });
+  // The beginner tutorial modal used to auto-open alongside the interactive
+  // AppTour, leaving new users staring at two onboarding flows at once. Now
+  // it only opens when the user explicitly clicks the "Start tutorial" button
+  // below — the AppTour is the single first-run experience.
+  const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   // For 'some' experience: a one-time soft banner offering the Help Center
   const [showHelpOffer, setShowHelpOffer] = useState(() => {

@@ -541,7 +541,11 @@ export default function ProjectEditor() {
           )}
 
           {view === 'beat-sheet' && (
-            <div data-tour="beat-sheet-view" className="contents">
+            // The wrapper used `display: contents` previously, which strips the
+            // box from layout — `getBoundingClientRect()` returned zeros and the
+            // tour spotlight had nothing to highlight. Use a real flex box that
+            // fills the parent so the spotlight has a target.
+            <div data-tour="beat-sheet-view" className="flex flex-1 flex-col overflow-hidden">
             <BeatSheetView beats={project.beatSheet}
               onChange={beats => updateProject({ ...project, beatSheet: beats })}
               nodes={nodes}

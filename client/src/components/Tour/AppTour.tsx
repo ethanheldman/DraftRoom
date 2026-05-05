@@ -112,9 +112,13 @@ const ALL_STEPS: TourStep[] = [
     id: 'done',
     icon: '🚀',
     title: 'You\'re Ready to Write!',
-    body: 'That\'s everything. The Help Center has detailed guides whenever you need them. Now go write something great.',
+    body: 'That\'s everything. The Help Center has detailed guides whenever you need them. Now pick a project and go write something great.',
     target: null,
-    route: 'any',
+    // Route back to the dashboard so the final card appears over the
+    // project list — leaving the user looking at the deck of scripts they
+    // can dive into, not stranded on whatever editor view the previous
+    // step happened to be on (usually Beat Sheet or AI Tools).
+    route: 'dashboard',
     cardPlacement: 'center',
   },
 ];

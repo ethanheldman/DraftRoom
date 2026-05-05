@@ -218,7 +218,7 @@ function CinematicIntro({ onDone }: { onDone: () => void }) {
           color: 'rgba(193,127,36,0.55)',
           fontFamily: "'JetBrains Mono', monospace",
         }}>
-          Write the damn script
+          Where screenplays begin
         </div>
       </div>
 

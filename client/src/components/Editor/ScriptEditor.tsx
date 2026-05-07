@@ -480,6 +480,27 @@ const ScriptEditor = forwardRef<ScriptEditorHandle, ScriptEditorProps>(function 
       if (e.key === 'u') { e.preventDefault(); applyMark('underline'); return; }
       if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
       if (e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); return; }
+      // Cmd/Ctrl+A: select across every line. Each line is its own
+      // contentEditable div, so the browser's default Cmd+A only highlights
+      // the focused line. Build a Range from the first line's start to the
+      // last line's end so users can select the whole script (and then copy,
+      // delete, etc.) the way they'd expect in any editor.
+      if (e.key === 'a' && !e.shiftKey && !e.altKey) {
+        const firstId = lines[0]?.id;
+        const lastId = lines[lines.length - 1]?.id;
+        const firstEl = firstId ? divRefs.current[firstId] : null;
+        const lastEl  = lastId  ? divRefs.current[lastId]  : null;
+        if (firstEl && lastEl) {
+          e.preventDefault();
+          const range = document.createRange();
+          range.setStart(firstEl, 0);
+          range.setEnd(lastEl, lastEl.childNodes.length);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+        return;
+      }
     }
 
     if (e.key === 'Tab') {

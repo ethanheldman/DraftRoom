@@ -204,17 +204,38 @@ const PAGE_CONTENT_PX = 864;
 const LINE_H = 16;   // 12pt × 1.0 line-height
 const EM     = 16;   // 1em = font-size
 
+// Industry char-width per element (10-pitch Courier on a 6"-wide content area).
+// The element styles indent each type to a different width — using a flat
+// 60 chars/line for everything badly under-counts wrapped lines for
+// dialogue/parenthetical, which is why long lines used to spill past the
+// 11" page boundary and get clipped by the page wrapper's overflow:hidden.
+const CHARS_PER_LINE: Record<ElementType, number> = {
+  scene_heading: 60,
+  action:        60,
+  transition:    60,
+  shot:          60,
+  act:           60,
+  text:          60,
+  character:     38, // 37% left padding ⇒ ~3.78" = ~38 chars
+  dialogue:      35, // 17% L + 25% R ⇒ ~3.48" = ~35 chars
+  parenthetical: 25, // 27% L + 32% R ⇒ ~2.46" = ~25 chars
+};
+
 function linesForNode(type: ElementType, content: string): number {
-  const textLines = Math.ceil((content.length || 1) / 60);
+  const cpl = CHARS_PER_LINE[type] ?? 60;
+  // Honor manual newlines too — pasted content / Shift-Enter / wrapped lines
+  // each take a real line on the page.
+  const segments = (content || '').split('\n');
+  const textLines = segments.reduce((acc, seg) => acc + Math.max(1, Math.ceil(seg.length / cpl)), 0);
   const textH     = textLines * LINE_H;
   switch (type) {
     case 'scene_heading': return EM       + textH;           // marginTop: 1em
     case 'action':        return EM       + textH;           // 0.5em top + 0.5em bottom
-    case 'character':     return EM       + LINE_H;          // marginTop: 1em + 1 line
+    case 'character':     return EM       + textH;           // marginTop: 1em + wrapped char text
     case 'dialogue':      return textH;                      // no block margins
-    case 'parenthetical': return LINE_H;                     // no block margins
-    case 'transition':    return 2 * EM   + LINE_H;          // 1em top + 1em bottom
-    case 'act':           return 2.5 * EM + LINE_H;          // 1.5em top + 1em bottom
+    case 'parenthetical': return textH;                      // no block margins
+    case 'transition':    return 2 * EM   + textH;           // 1em top + 1em bottom
+    case 'act':           return 2.5 * EM + textH;           // 1.5em top + 1em bottom
     default:              return EM       + textH;
   }
 }
@@ -666,8 +687,14 @@ const ScriptEditor = forwardRef<ScriptEditorHandle, ScriptEditorProps>(function 
     width: '816px',      // 8.5"
     minWidth: '816px',
     maxWidth: '816px',
-    height: '1056px',    // 11"
-    overflow: 'hidden',
+    minHeight: '1056px', // 11" — let the page grow if pagination underestimates
+    // overflow used to be `hidden`, which clipped any line that wrapped past
+    // the 11" boundary so it literally disappeared. The pagination estimator
+    // was undercounting wrapped-line height for indented elements (dialogue,
+    // parenthetical, character) — now it counts per-element char widths, but
+    // we keep overflow visible as a safety net so a residual miscount doesn't
+    // delete the writer's words from the screen.
+    overflow: 'visible',
     // Industry margins: 1.5" left (for hole-punch binding), 1" right/top/bottom.
     padding: '96px 96px 96px 144px',
     boxSizing: 'border-box',

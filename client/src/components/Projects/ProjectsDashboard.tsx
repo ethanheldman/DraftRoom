@@ -161,7 +161,7 @@ export default function ProjectsDashboard() {
   // (for immediate UI) and Supabase (so usePlan doesn't overwrite us with the cloud
   // `free` value on the next mount / reload — that was the bug where Pro "didn't stay").
   async function handleRedeem() {
-    if (redeemCode.trim().toLowerCase() !== 'bighairymanjuice') {
+    if (redeemCode.trim().toLowerCase() !== 'dcs2026') {
       setRedeemStatus('invalid');
       return;
     }

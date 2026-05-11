@@ -72,11 +72,6 @@ export default function LandingPage() {
       <section className="lp-hero">
         <div className="lp-hero-left">
           <p className="lp-hero-eyebrow">For writers who mean it</p>
-          <h1 className="lp-hero-headline">
-            <span className="lp-hero-line-1">Write</span>
-            <span className="lp-hero-line-2">The Damn</span>
-            <span className="lp-hero-line-3">Script.</span>
-          </h1>
           <p className="lp-hero-sub">
             Professional screenwriting software that gets out of your way.
             No ribbon menus. No legacy bloat. Just you and the page.

@@ -371,7 +371,10 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   // ── Collect raw text items per page ──────────────────────────────────────
-  type TItem = { str: string; x: number; y: number };
+  // Keep whitespace-only items: PDF text streams often emit inter-word spaces
+  // as their own items, and dropping them was joining adjacent words together
+  // (e.g. "Aland,fluorescent-litclassroom").
+  type TItem = { str: string; x: number; y: number; w: number };
   type PageData = { items: TItem[]; pw: number; ph: number };
   const pages: PageData[] = [];
 
@@ -381,11 +384,32 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
     const tc = await page.getTextContent();
     const items: TItem[] = [];
     for (const it of tc.items) {
-      if ('str' in it && it.str.trim()) {
-        items.push({ str: it.str, x: it.transform[4], y: it.transform[5] });
-      }
+      if (!('str' in it) || it.str === '') continue;
+      const w = ('width' in it && typeof it.width === 'number' && it.width > 0)
+        ? it.width
+        : it.str.length * 6.0; // fallback for Courier 12pt
+      items.push({ str: it.str, x: it.transform[4], y: it.transform[5], w });
     }
     pages.push({ items, pw: vp.width, ph: vp.height });
+  }
+
+  // Join row items left-to-right, inserting a space when there's an x-gap
+  // between items and neither side already carries whitespace.
+  function joinRow(items: TItem[]): string {
+    if (items.length === 0) return '';
+    const sorted = [...items].sort((a, b) => a.x - b.x);
+    let out = sorted[0].str;
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      const prevEnd = prev.x + prev.w;
+      const gap = curr.x - prevEnd;
+      const endsWithWs = /\s$/.test(out);
+      const startsWithWs = /^\s/.test(curr.str);
+      if (gap > 1.5 && !endsWithWs && !startsWithWs) out += ' ';
+      out += curr.str;
+    }
+    return out.replace(/\s+/g, ' ').trim();
   }
 
   // ── Pass 1: detect repeated footer/header text to strip ──────────────────
@@ -420,8 +444,8 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
     if (maxGap > pw * 0.18 && splitAt > 0) {
       const left = sorted.slice(0, splitAt);
       const right = sorted.slice(splitAt);
-      const lTxt = left.map(i => i.str).join('').trim();
-      const rTxt = right.map(i => i.str).join('').trim();
+      const lTxt = joinRow(left);
+      const rTxt = joinRow(right);
       if (lTxt.length >= 2 && rTxt.length >= 2) return [left, right];
     }
     return [sorted];
@@ -447,7 +471,7 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
       const rowItems = rows.get(y)!;
       const relY = y / ph;
       const isEdge = relY < 0.08 || relY > 0.92;
-      const fullText = rowItems.sort((a, b) => a.x - b.x).map(i => i.str).join('').trim();
+      const fullText = joinRow(rowItems);
 
       if (!fullText) continue;
 
@@ -463,7 +487,7 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
       // Detect dual columns and emit as separate lines
       const cols = splitColumns(rowItems, pw);
       for (const col of cols) {
-        const colText = col.map(i => i.str).join('').trim();
+        const colText = joinRow(col);
         if (!colText) continue;
         const x = col[0].x;
         allLines.push({ text: colText, x, relX: x / pw, relY });
@@ -481,41 +505,62 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
   // Using 0.20 as the boundary separating action (< 0.20) from dialogue (≥ 0.20).
   const nodes: ScriptNode[] = [];
   let prevType: ElementType | null = null;
+  let prevRelY: number | null = null;
   let foundFirstScene = false;
 
+  // Approximate intra-paragraph line gap. Standard screenplay has ~56 lines/page,
+  // so single-line spacing ≈ 1/56 ≈ 0.018. A paragraph break is roughly double
+  // that. Anything below 0.025 we treat as a wrapped continuation.
+  const PARAGRAPH_GAP = 0.025;
+
   for (const line of allLines) {
-    if (!line) { prevType = null; continue; }
-    const { text, relX } = line;
+    if (!line) { prevType = null; prevRelY = null; continue; }
+    const { text, relX, relY } = line;
     const trimmed = text.trim();
     const upper = trimmed.toUpperCase();
     const isAllCaps = trimmed === upper && /[A-Z]/.test(upper);
+
+    // Helper: append wrapped continuation into the previous node, otherwise push new.
+    const isWrappedFrom = (t: ElementType) =>
+      prevType === t &&
+      prevRelY !== null &&
+      Math.abs(prevRelY - relY) < PARAGRAPH_GAP &&
+      nodes.length > 0;
+
+    // Transition — allowed before first scene so opening FADE IN: survives.
+    const isTransition =
+      isAllCaps && (
+        /^FADE (IN|OUT)[.:]?$/.test(upper) ||
+        /\s?TO:$/.test(upper) ||
+        /^(DISSOLVE|SMASH CUT|MATCH CUT)/.test(upper)
+      );
 
     // Scene heading (triggers end of title-page skip)
     if (/^(INT\.|EXT\.|INT\.\/EXT\.|I\/E[\s.])/.test(upper)) {
       foundFirstScene = true;
       nodes.push({ type: 'scene_heading', content: upper });
       prevType = 'scene_heading';
+      prevRelY = relY;
+      continue;
+    }
+
+    if (isTransition) {
+      // FADE IN: before any scene heading still opens the script, so honor it.
+      foundFirstScene = foundFirstScene || /^FADE IN/.test(upper);
+      nodes.push({ type: 'transition', content: trimmed });
+      prevType = 'transition';
+      prevRelY = relY;
       continue;
     }
 
     // Skip title page content (everything before first INT./EXT.)
     if (!foundFirstScene) continue;
 
-    // Transition
-    if (isAllCaps && (
-      /^FADE (IN|OUT)[.:]?$/.test(upper) ||
-      /\s?TO:$/.test(upper) ||
-      /^(DISSOLVE|SMASH CUT|MATCH CUT)/.test(upper)
-    )) {
-      nodes.push({ type: 'transition', content: trimmed });
-      prevType = 'transition';
-      continue;
-    }
-
     // Parenthetical — detect by content pattern (works for both columns)
     if (trimmed.startsWith('(') && trimmed.endsWith(')')) {
       nodes.push({ type: 'parenthetical', content: trimmed });
       prevType = 'parenthetical';
+      prevRelY = relY;
       continue;
     }
 
@@ -523,24 +568,36 @@ export async function parsePDF(arrayBuffer: ArrayBuffer): Promise<ScriptNode[]> 
     if (isAllCaps && relX > 0.30 && trimmed.length < 60 && !/^(INT\.|EXT\.)/.test(upper)) {
       nodes.push({ type: 'character', content: trimmed });
       prevType = 'character';
+      prevRelY = relY;
       continue;
     }
 
     // Dialogue: follows character/parenthetical/dialogue AND indented beyond action margin.
-    // The 0.20 threshold keeps action lines (relX ≈ 0.176) from being mis-classified
-    // as dialogue even when they immediately follow a dialogue block.
     if (
       (prevType === 'character' || prevType === 'parenthetical' || prevType === 'dialogue') &&
       relX >= 0.20
     ) {
-      nodes.push({ type: 'dialogue', content: trimmed });
+      if (isWrappedFrom('dialogue')) {
+        nodes[nodes.length - 1].content =
+          `${nodes[nodes.length - 1].content} ${trimmed}`.replace(/\s+/g, ' ');
+      } else {
+        nodes.push({ type: 'dialogue', content: trimmed });
+      }
       prevType = 'dialogue';
+      prevRelY = relY;
       continue;
     }
 
-    // Default: action
-    nodes.push({ type: 'action', content: trimmed });
+    // Default: action — merge with the preceding action node if this row is the
+    // next wrapped line of the same paragraph (small Y delta).
+    if (isWrappedFrom('action')) {
+      nodes[nodes.length - 1].content =
+        `${nodes[nodes.length - 1].content} ${trimmed}`.replace(/\s+/g, ' ');
+    } else {
+      nodes.push({ type: 'action', content: trimmed });
+    }
     prevType = 'action';
+    prevRelY = relY;
   }
 
   return nodes.length > 0 ? nodes : [

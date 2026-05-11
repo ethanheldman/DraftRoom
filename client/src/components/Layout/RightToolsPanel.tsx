@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ScriptNode } from '../../types/screenplay';
+import { estimatePageCount } from '../../utils/storage';
 
 export type ToolTab = 'stats' | 'characters' | 'notes';
 
@@ -20,10 +21,10 @@ function computeStats(nodes: ScriptNode[]) {
   const actionCount = nodes.filter(n => n.type === 'action').length;
   const dialogueCount = nodes.filter(n => n.type === 'dialogue').length;
 
-  // Rough page estimate: ~50 elements per page (industry: 1 page ≈ 50–55 lines)
-  // We keep the raw value around for runtime math (needs finer granularity
-  // than 0.1-page buckets) while still exposing the rounded value for display.
-  const estimatedPagesRaw = Math.max(0, nodes.length / 52);
+  // Use the same page estimator the editor uses (mirrors the real page-
+  // break loop). The previous "nodes.length / 52" approximation counted
+  // raw elements, so a four-page draft with long paragraphs displayed as 1.
+  const estimatedPagesRaw = estimatePageCount(nodes);
   const estimatedPages = Math.max(1, parseFloat(estimatedPagesRaw.toFixed(1)));
 
   // Character → dialogue line count

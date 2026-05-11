@@ -34,6 +34,32 @@ function dayNightFromClockTime(h: string): Strip['dayNight'] | null {
   return 'NIGHT';
 }
 
+// Walk the script and return, per scene, the unique character cues that
+// speak inside it. Names are normalised: extensions like (V.O.) / (O.S.) /
+// (CONT'D) are stripped so the same role doesn't appear twice.
+function computeSceneCasts(nodes: ScriptNode[]): string[] {
+  const result: string[] = [];
+  let current = new Set<string>();
+  let inScene = false;
+  const push = () => {
+    result.push([...current].join(', '));
+  };
+  for (const n of nodes) {
+    if (n.type === 'scene_heading') {
+      if (inScene) push();
+      current = new Set<string>();
+      inScene = true;
+      continue;
+    }
+    if (inScene && n.type === 'character') {
+      const name = n.content.replace(/\s*\([^)]*\)\s*$/, '').trim().toUpperCase();
+      if (name) current.add(name);
+    }
+  }
+  if (inScene) push();
+  return result;
+}
+
 function parseHeading(h: string): Pick<Strip, 'intExt' | 'location' | 'dayNight'> {
   const upper = h.toUpperCase();
   const intExt: Strip['intExt'] = upper.startsWith('INT/EXT') || upper.startsWith('I/E')
@@ -60,9 +86,17 @@ type FilterDN = 'ALL' | 'DAY' | 'NIGHT' | 'DAWN' | 'DUSK';
 
 export default function ScheduleView({ nodes, onSceneClick }: Props) {
   const headings = getSceneHeadings(nodes);
-  const [strips, setStrips] = useState<Strip[]>(() =>
-    headings.map((h, i) => ({ sceneIndex: i, heading: h, pages: 1, shootDays: 0.125, cast: '', ...parseHeading(h) }))
-  );
+  const [strips, setStrips] = useState<Strip[]>(() => {
+    const sceneCasts = computeSceneCasts(nodes);
+    return headings.map((h, i) => ({
+      sceneIndex: i,
+      heading: h,
+      pages: 1,
+      shootDays: 0.125,
+      cast: sceneCasts[i] ?? '',
+      ...parseHeading(h),
+    }));
+  });
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [filterIE, setFilterIE] = useState<FilterIE>('ALL');
@@ -180,7 +214,7 @@ export default function ScheduleView({ nodes, onSceneClick }: Props) {
           <div className="w-8">Scene</div>
           <div className="w-16">Type</div>
           <div className="flex-1">Location</div>
-          <div className="w-20">Cast</div>
+          <div className="w-44">Cast</div>
           <div className="w-16 text-center">Pages</div>
           <div className="w-20 text-center">Days</div>
         </div>
@@ -239,7 +273,8 @@ export default function ScheduleView({ nodes, onSceneClick }: Props) {
                     value={strip.cast}
                     onChange={e => updateStrip(originalIdx, { cast: e.target.value })}
                     placeholder="Cast…"
-                    className="w-20 rounded-lg border border-border bg-transparent px-1.5 py-0.5 text-[10px] text-muted-foreground outline-none focus:border-violet-400/70 transition-colors"
+                    title={strip.cast || 'No speaking characters detected'}
+                    className="w-44 rounded-lg border border-border bg-transparent px-1.5 py-0.5 text-[10px] text-muted-foreground outline-none focus:border-violet-400/70 transition-colors"
                   />
                   <input
                     type="number" min="0.125" step="0.125" value={strip.pages}

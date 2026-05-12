@@ -10,9 +10,6 @@ interface InlineAIMenuProps {
 }
 
 const ACTIONS = [
-  { id: 'rewrite', label: '✦ Rewrite' },
-  { id: 'funnier', label: '😄 Funnier' },
-  { id: 'darker', label: '🌑 Darker' },
   { id: 'shorten', label: '✂ Shorten' },
   { id: 'expand', label: '↔ Expand' },
   { id: 'punchup', label: '⚡ Punch it up' },
@@ -94,9 +91,6 @@ export default function InlineAIMenu({ nodes, scriptTitle, onApply, containerRef
     setResult(null);
 
     const actionLabels: Record<string, string> = {
-      rewrite: 'Rewrite this line/passage with fresh wording that preserves the exact meaning and tone.',
-      funnier: 'Rewrite this to be funnier while keeping it appropriate to the scene.',
-      darker: 'Rewrite this with a darker, more menacing tone.',
       shorten: 'Shorten this to its essential meaning. Be concise.',
       expand: 'Expand this with more vivid detail or subtext, keeping it screenplay-appropriate.',
       punchup: 'Punch up this line to make it more memorable, impactful, and cinematic.',

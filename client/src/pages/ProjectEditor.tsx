@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import type { ScriptNode, ElementType, Project, Beat, CastMember, BreakdownItem, Shot, BudgetLine, MediaItem } from '../types/screenplay';
 import { getProject, upsertProject, loadScript, saveScript, defaultScript, createNewProject, estimatePageCount, countWords, saveVersionSnapshot, loadVersionHistory } from '../utils/storage';
 import { exportFountain, exportTxt, exportFDX } from '../utils/fountain';
-import InlineAIMenu from '../components/Editor/InlineAIMenu';
 
 import Sidebar from '../components/Layout/Sidebar';
 import type { EditorView } from '../components/Layout/Sidebar';
@@ -312,15 +311,6 @@ export default function ProjectEditor() {
     setShowVersionHistory(true);
   }
 
-  function handleInlineApply(nodeIdx: number, content: string) {
-    const n = [...nodes];
-    if (n[nodeIdx]) { n[nodeIdx] = { ...n[nodeIdx], content }; }
-    setNodes(n);
-    latestNodes.current = n;
-    if (projectId) { saveScript(projectId, n); setLastSaved(new Date()); }
-    editorRef.current?.replaceContent(nodeIdx, content);
-  }
-
   function handleSceneColorChange(nodeIndex: number, color: string | undefined) {
     const n = nodes.map((node, i) => i === nodeIndex ? { ...node, color } : node);
     setNodes(n);
@@ -459,14 +449,6 @@ export default function ProjectEditor() {
                         appliedAt={scriptAppliedAt} />
                     </div>
                   </div>
-                  {isPro(plan) && (
-                    <InlineAIMenu
-                      nodes={nodes}
-                      scriptTitle={project.title}
-                      onApply={handleInlineApply}
-                      containerRef={scrollAreaRef}
-                    />
-                  )}
                 </div>
 
                 {/* Right panel — absolute overlay so script never shifts. Hidden below lg. */}

@@ -153,42 +153,10 @@ function TryItBox({ prompt, placeholder, evaluate }: {
 }) {
   const [text, setText] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
 
   function checkLocal() {
     if (!text.trim()) return;
     setFeedback(evaluate(text));
-    setAiFeedback(null);
-  }
-
-  async function getAIFeedback() {
-    if (!text.trim()) return;
-    setAiLoading(true);
-    setAiFeedback(null);
-    try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feature: 'script_doctor',
-          scriptText: text,
-          title: 'Practice Exercise',
-          question: `As a professional screenwriting instructor, evaluate this student's attempt at the following exercise: "${prompt}"\n\nTheir answer:\n"${text}"\n\nGive 2-3 sentences of constructive, encouraging feedback. Point out what's correct, what could be improved, and give one specific rewrite suggestion. Keep it friendly and practical.`,
-          stream: false,
-        }),
-      });
-      const raw = await res.text();
-      const lines = raw.split('\n').filter(l => l.startsWith('data: '));
-      let out = '';
-      for (const l of lines) {
-        const d = l.slice(6);
-        if (d === '[DONE]') break;
-        try { const p = JSON.parse(d); if (p.delta?.text) out += p.delta.text; else if (p.text) out += p.text; } catch { out += d; }
-      }
-      setAiFeedback(out.trim() || raw.trim());
-    } catch { setAiFeedback('AI feedback unavailable right now.'); }
-    finally { setAiLoading(false); }
   }
 
   return (
@@ -201,7 +169,7 @@ function TryItBox({ prompt, placeholder, evaluate }: {
       <div className="p-4">
         <textarea
           value={text}
-          onChange={e => { setText(e.target.value); setFeedback(null); setAiFeedback(null); }}
+          onChange={e => { setText(e.target.value); setFeedback(null); }}
           placeholder={placeholder}
           rows={3}
           className="w-full rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none transition-all"
@@ -215,13 +183,7 @@ function TryItBox({ prompt, placeholder, evaluate }: {
             style={{ background: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
             Check Format
           </button>
-          <button onClick={getAIFeedback} disabled={!text.trim() || aiLoading}
-            className="rounded-xl px-4 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff' }}>
-            <SparklesIcon className="w-3 h-3" />
-            {aiLoading ? 'Analyzing…' : 'AI Feedback'}
-          </button>
-          {text && <button onClick={() => { setText(''); setFeedback(null); setAiFeedback(null); }}
+          {text && <button onClick={() => { setText(''); setFeedback(null); }}
             className="rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
             Clear
           </button>}
@@ -236,12 +198,6 @@ function TryItBox({ prompt, placeholder, evaluate }: {
               {feedback.startsWith('✓') ? '✓ ' : '⚠ '}
             </span>
             <span>{feedback.replace(/^✓\s*/, '')}</span>
-          </div>
-        )}
-        {aiFeedback && (
-          <div className="mt-3 rounded-xl p-3 text-xs leading-relaxed text-violet-200"
-            style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
-            <span className="text-violet-400 font-semibold">✦ AI Coach: </span>{aiFeedback}
           </div>
         )}
       </div>

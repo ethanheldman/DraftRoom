@@ -227,9 +227,15 @@ function TryItBox({ prompt, placeholder, evaluate }: {
           </button>}
         </div>
         {feedback && (
-          <div className={`mt-3 rounded-xl p-3 text-xs leading-relaxed ${feedback.startsWith('✓') ? 'text-emerald-300' : 'text-amber-300'}`}
-            style={{ background: feedback.startsWith('✓') ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', border: `1px solid ${feedback.startsWith('✓') ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
-            {feedback}
+          <div className="mt-3 rounded-xl p-3 text-xs leading-relaxed text-foreground"
+            style={{
+              background: feedback.startsWith('✓') ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.12)',
+              border: `1px solid ${feedback.startsWith('✓') ? 'rgba(34,197,94,0.35)' : 'rgba(245,158,11,0.4)'}`,
+            }}>
+            <span className={`font-semibold ${feedback.startsWith('✓') ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {feedback.startsWith('✓') ? '✓ ' : '⚠ '}
+            </span>
+            <span>{feedback.replace(/^✓\s*/, '')}</span>
           </div>
         )}
         {aiFeedback && (
